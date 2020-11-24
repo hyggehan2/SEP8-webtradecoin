@@ -1,0 +1,82 @@
+/*
+프로젝트e.com 회원가입 페이지의 동작을 위한 소스코드입니다. 올바른 사용자인지 확인하고, 
+사용자가 입력해야하는 변수의 형식을 검증합니다. 이를 위한 웹페이지의 동작에 대해 작성합니다. 
+*/
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
+		<meta name="viewport" content="initial-scale=1.0; maximum-scale=0.75; minimum-scale=1.0; user-scalable=1;width=device-width;"/>
+	<div align="center">
+	</head>
+/*
+사용자에게 웹페이지 이동에 필요한 동작을 제공하고, 올바른 사용자, 회원가입을 위한 필드의 형식과 
+내용을 검증합니다. 검증결과 오류가 없다면 사용자는 회원가입을 완료할 수 있습니다.
+*/
+	//사용자에게 웹페이지를 이동에 필요한 동작을 제공하고, 올바른 사용자인지 검사합니다.
+	<body>
+		<a href="/join.php" target="_self"><button type="submit">뒤로가기</button></a>
+		<a href="/home.php" target="_self"><button type="submit">홈으로</button></a><br>
+		<?php
+			//올바른 사용자인지 검사합니다.
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, "https://www.google.com/recaptcha/api/siteverify");
+			curl_setopt($ch, CURLOPT_POSTFIELDS, "secret=6Lfkl3IUAAAAAC1e7DBAss86mGpe68kAs8D2XkFk&response=".$_POST['g-recaptcha-response']);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); 
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0); 
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_POST, 1);
+			$result = json_decode(curl_exec($ch), true);
+			curl_close($ch);
+			//사용자가 회원가입에 필요한 정보의 형식을 결정하고, 올바르게 작성하는지 검사합니다.
+			if($result["success"] == true)	{
+		
+		
+		
+				date_default_timezone_set('Asia/Seoul');
+				include('config.php');
+				$date = date("Y-m-d H:i:s");
+				$name = $_POST['name'];
+				$pass = (sha1(sha1(sha1($_POST['pass']))));
+				$vpass = (sha1(sha1(sha1($_POST['vpass']))));
+				$email = $_POST['email'];
+				$birth = $_POST['birth'];
+				
+				
+				
+				$emailcheck = ('SELECT * FROM accounts WHERE email="'.mysql_escape_string($email).'"');
+				
+				if($name == "") {
+					echo "<script>alert('계정을 입력 해주세요.')</script>";
+					echo "<meta http-equiv=refresh content='0 url=./join.php'>";
+					exit();
+				}
+					elseif(mysql_num_rows(mysql_query($emailcheck)) >= 1 ) {
+						echo "<script>alert('이미 사용중인 이메일 입니다.')</script>";
+						echo "<meta http-equiv=refresh content='0 url=./join.php'>";
+						exit();
+					}
+					elseif($pass == "") {
+						echo "<script>alert('비밀번호를 입력하여 주세요.')</script>";
+						echo "<meta http-equiv=refresh content='0 url=./join.php'>";
+						exit();
+					}
+					elseif($vpass != $pass) {
+						echo "<script>alert('비밀번호 확인이 틀렸습니다.')</script>";
+						echo "<meta http-equiv=refresh content='0 url=./join.php'>";
+						exit();
+					}
+				else {
+					$join = 'INSERT INTO accounts (email, name, password, birth) VALUES ("'.mysql_real_escape_string($email).'", "'.mysql_real_escape_string($name).'", "'.$pass.'", "'.mysql_real_escape_string($birth).'")';
+					mysql_query($join) OR die (mysql_error());
+					echo "<script>alert('계정이 생성 되었습니다. 로그인하여 주세요.')</script>";
+					echo "<meta http-equiv=refresh content='0 url=./login.php'>";
+				}
+			}
+			else {
+				echo "<script>alert('로봇이 아닙니다. 를 체크하여 주세요.')</script>";
+				echo "<meta http-equiv=refresh content='0 url=./join.php'>";
+			}
+		?>
+	</body>
+</html>
